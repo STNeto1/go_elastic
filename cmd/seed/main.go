@@ -1,11 +1,15 @@
 package main
 
 import (
+	"__elastic/pkg/common/db"
+	"__elastic/pkg/common/models"
 	"encoding/csv"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type Shape struct {
@@ -24,6 +28,8 @@ type Shape struct {
 }
 
 func main() {
+	db := db.Init()
+
 	f, err := os.Open("assets/dataset.csv")
 	if err != nil {
 		log.Fatalln("Error loading dataset", err)
@@ -62,6 +68,36 @@ func main() {
 
 		movies = append(movies, movie)
 	}
+
+	db.Transaction(func(tx *gorm.DB) error {
+		delRes := tx.Where("1 = 1").Delete(&models.Movie{})
+		if delRes.Error != nil {
+			return delRes.Error
+		}
+
+		for _, movie := range movies {
+			res := tx.Create(&models.Movie{
+				Poster:       movie.Poster,
+				Title:        movie.Title,
+				ReleaseYear:  movie.ReleaseYear,
+				Certificate:  movie.Certificate,
+				Runtime:      movie.Runtime,
+				Genre:        movie.Genre,
+				IMDBRating:   movie.IMDBRating,
+				Overview:     movie.Overview,
+				MetaScore:    movie.MetaScore,
+				Director:     movie.Director,
+				Votes:        movie.Votes,
+				GrossRevenue: movie.GrossRevenue,
+			})
+
+			if res.Error != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func parseInt32(elem string) int32 {
