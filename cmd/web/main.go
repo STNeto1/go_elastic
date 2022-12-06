@@ -4,7 +4,9 @@ import (
 	"__elastic/pkg/common/container"
 	"__elastic/pkg/common/models"
 	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -34,7 +36,9 @@ func main() {
 			qb = qb.Where("(title like \"%?%\") or (overview like \"%?%\") or (director like \"%?%\")", term, term, term)
 		}
 
+		start := time.Now()
 		_ = qb.Find(&result)
+		log.Printf("Took the database: %v", time.Now().Sub(start))
 
 		marshalData, _ := json.Marshal(result)
 
