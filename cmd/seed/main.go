@@ -28,7 +28,8 @@ type Shape struct {
 }
 
 func main() {
-	db := db.Init()
+	dbConn := db.Init()
+	es := db.InitES()
 
 	f, err := os.Open("assets/dataset.csv")
 	if err != nil {
@@ -69,7 +70,7 @@ func main() {
 		movies = append(movies, movie)
 	}
 
-	db.Transaction(func(tx *gorm.DB) error {
+	dbConn.Transaction(func(tx *gorm.DB) error {
 		delRes := tx.Where("1 = 1").Delete(&models.Movie{})
 		if delRes.Error != nil {
 			return delRes.Error

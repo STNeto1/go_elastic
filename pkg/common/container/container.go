@@ -2,7 +2,7 @@ package container
 
 import (
 	"__elastic/pkg/common/db"
-
+	. "github.com/elastic/go-elasticsearch/v8"
 	"gorm.io/gorm"
 )
 
