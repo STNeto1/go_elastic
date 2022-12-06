@@ -3,12 +3,16 @@ package main
 import (
 	"__elastic/pkg/common/db"
 	"__elastic/pkg/common/models"
+	"context"
 	"encoding/csv"
+	"encoding/json"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"gorm.io/gorm"
 )
 
@@ -99,6 +103,49 @@ func main() {
 
 		return nil
 	})
+
+	var wg sync.WaitGroup
+	for _, movie := range movies {
+		wg.Add(1)
+
+		go func(movie Shape) {
+			data, err := json.Marshal(movie)
+			if err != nil {
+				log.Fatalf("Error marshaling document: %s", err)
+			}
+
+			idx := strconv.Itoa(int(movie.ReleaseYear)) + movie.Title
+			req := esapi.IndexRequest{
+				Index:      "movies",
+				DocumentID: idx,
+				Body:       strings.NewReader(string(data)),
+				Refresh:    "true",
+			}
+
+			res, err := req.Do(context.Background(), es)
+			if err != nil {
+				log.Fatalf("Error getting response: %s", err)
+			}
+			defer res.Body.Close()
+
+			if res.IsError() {
+				log.Printf("[%s] Error indexing document ID=%s", res.Status(), idx)
+			} else {
+				// Deserialize the response into a map.
+				var r map[string]interface{}
+				if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+					log.Printf("Error parsing the response body: %s", err)
+				} else {
+					// Print the response status and indexed document version.
+					log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
+				}
+			}
+
+			wg.Done()
+		}(movie)
+	}
+
+	wg.Wait()
 }
 
 func parseInt32(elem string) int32 {
