@@ -17,18 +17,18 @@ import (
 )
 
 type Shape struct {
-	Poster       string
-	Title        string
-	ReleaseYear  int32
-	Certificate  string
-	Runtime      string
-	Genre        string
-	IMDBRating   float32
-	Overview     string
-	MetaScore    int32
-	Director     string
-	Votes        int64
-	GrossRevenue int64
+	Poster       string  `json:"poster"`
+	Title        string  `json:"title"`
+	ReleaseYear  int32   `json:"release_year"`
+	Certificate  string  `json:"certificate"`
+	Runtime      string  `json:"runtime"`
+	Genre        string  `json:"genre"`
+	IMDBRating   float32 `json:"imdb_rating"`
+	Overview     string  `json:"overview"`
+	MetaScore    int32   `json:"meta_score"`
+	Director     string  `json:"director"`
+	Votes        int64   `json:"votes"`
+	GrossRevenue int64   `json:"gross_revenue"`
 }
 
 func main() {

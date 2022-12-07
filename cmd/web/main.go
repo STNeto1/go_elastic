@@ -51,19 +51,19 @@ func main() {
 		term := r.URL.Query().Get("term")
 
 		var buf bytes.Buffer
+		// elasticsearch multiple fields
 		query := map[string]interface{}{
 			"query": map[string]interface{}{
-				"match": map[string]interface{}{
-					"title": map[string]interface{}{
-						"query":     term,
-						"fuzziness": 2,
-					},
+				"multi_match": map[string]interface{}{
+					"query":  term,
+					"fields": []string{"title", "overview", "director"},
 				},
 			},
 		}
 		if err := json.NewEncoder(&buf).Encode(query); err != nil {
 			log.Fatalf("Error encoding query: %s", err)
 		}
+		start := time.Now()
 		res, err := c.ES.Search(
 			c.ES.Search.WithContext(context.Background()),
 			c.ES.Search.WithIndex("movies"),
@@ -74,6 +74,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error getting response: %s", err)
 		}
+		log.Printf("Took the elasticsearch: %v", time.Since(start))
 		defer res.Body.Close()
 
 		var rBuf map[string]interface{}
